@@ -1,0 +1,179 @@
+---
+title: "Equity Action Plan Text Tool"
+format: dashboard
+---
+
+```{r}
+#| label: setup
+
+options(digits = 1)
+
+librarian::shelf(
+  tidyverse, here, epoxy, quanteda, tidytext, spacyr, glue, gt,
+  printr, corpustools, quanteda.textstats, quanteda.textplots, ggh4x, crosstalk
+)
+use_epoxy_glue_engine()
+source("_common.R")
+```
+
+```{r}
+#| label: load-data
+
+data <- read_csv(here("data", "plans-text.csv"))
+
+data(stop_words)
+
+tokens <-
+  arrow::read_parquet(here("data/spacy-tokens.parquet")) |>
+  filter(!(pos %in% c("NUM", "PUNCT", "X", "SYM"))) |>
+  anti_join(stop_words |> filter(lexicon == "snowball"), by = c("token" = "word"))
+```
+
+
+```{r}
+#| label: make-dictionary
+
+terms <-
+  read_csv(here::here("data/search_terms.csv")) %>%
+  rename_with(~ janitor::make_clean_names(.x), everything()) %>%
+  pivot_longer(matches("search_term"),
+    names_to = "search_term_number",
+    names_prefix = "search_term_",
+    values_to = "search_term"
+  ) %>%
+  drop_na(search_term) %>%
+  summarise(
+    search_terms = str_flatten(search_term, collapse = ", ") %>%
+      str_trim() |> str_split(", "),
+    .by = c("pattern", "concept")
+  )
+
+terms_pattern <- set_names(terms$search_terms, terms$pattern)
+# Create dictionary
+dict <- dictionary(as.list(terms_pattern))
+```
+
+```{r}
+#| label: universe-search
+#| echo: false
+
+# Perform a KWIC search on our tokens
+# We specify a window of 10 words on either side of the keyword.
+# We then convert the result into a tibble, remove unnecessary columns,
+# and move the 'pattern' column (which contains the keywords) after the 'docname' column.
+# Finally, we join the result with our dictionary to append the search terms to the results.
+
+
+universe_search <-
+  kwic(as.tokens(tokens, use_lemma = TRUE), dict, window = 10) |>
+  as_tibble() |>
+  select(-c(from, to)) |>
+  relocate(pattern, .after = "docname") |>
+  left_join(make_dict_tidy(dict), by = c("pattern"))
+```
+
+
+## Row {height=100%}
+
+
+```{r}
+#| label: browser-search-tool
+#| echo: false
+
+
+data_collapsed <-
+  data |>
+  mutate(layout_type_and_number = if_else(str_detect(
+    layout_type_and_number,
+    "part of layout list"
+  ),
+  str_remove(layout_type_and_number, "Text \\d+ - "),
+  layout_type_and_number
+  )) |>
+  summarise(
+    text = str_c(text, collapse = " \n "),
+    .by = c("year", "agency", "layout_type_and_number", "page_number")
+  ) |>
+  mutate(doc_id = str_c(agency, year, layout_type_and_number, sep = "-"))
+
+corpus_collapsed <- corpus(data_collapsed, docid_field = "doc_id", text_field = "text")
+
+corpus_collapsed_detailed <-
+  corpus_collapsed |>
+  as_tibble_col(column_name = "text") |>
+  bind_cols(docnames(corpus_collapsed) |>
+    as_tibble_col(column_name = "doc_id")) |>
+  bind_cols(docvars(corpus_collapsed)) |>
+  mutate(doc_id = str_remove(doc_id, "-equity-action-plan|-fwk-for-health-equity"))
+
+tc <- create_tcorpus(corpus_collapsed_detailed,
+  split_sentences = TRUE,
+  max_sentences = Inf,
+  meta = c("agency", "year", "layout_type_and_number", "page_number")
+)
+hits <- search_dictionary(tc, dict, ascii = TRUE, mode = "unique_hits")
+
+browse_hits(tc,
+  hits,
+  filename = here("topic-browser.html"),
+  view = FALSE,
+  header = "Global Keyword Search Results",
+  n = Inf,
+  meta_cols = c("agency", "year", "layout_type_and_number", "page_number"),
+  seed = 999
+)
+```
+
+```{r}
+#| label: modular-tabs
+
+create_tabset <- function(dict, title, filename) {
+  # Create tcorpus and search for hits
+  tc <- create_tcorpus(corpus_collapsed_detailed,
+    split_sentences = TRUE,
+    max_sentences = Inf,
+    meta = c("agency", "year", "layout_type_and_number", "page_number")
+  )
+  hits <- search_dictionary(tc, dict, ascii = TRUE, mode = "unique_hits")
+
+  # Browse hits and save to file
+  browse_hits(tc,
+    hits,
+    filename = filename,
+    view = FALSE,
+    header = title,
+    n = Inf,
+    meta_cols = c("agency", "year", "layout_type_and_number", "page_number"),
+    seed = 999
+  )
+
+  # Return HTML code for iframe
+
+} 
+```
+
+::: panel-tabset
+
+
+### All Keywords
+
+```{=html}
+<iframe width="100%" height="100%" src="topic-browser.html" title="Webpage example"></iframe>
+```
+
+### Underserved Communities
+
+```{r}
+dict_underserved_communities <- dict[18:34]
+tabset_underserved_communities <- create_tabset(dict_underserved_communities, "Underserved Communities", "topic-browser-underserved-communities.html")
+
+
+```
+
+
+```{=html}
+<iframe width="100%" height="100%" src="topic-browser-underserved-communities.html" title="Webpage example"></iframe>
+```
+
+:::
+
