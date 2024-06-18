@@ -104,7 +104,9 @@ data_collapsed <-
     text = str_c(text, collapse = " \n "),
     .by = c("year", "agency", "layout_type_and_number", "page_number")
   ) |>
-  mutate(doc_id = str_c(agency, year, layout_type_and_number, sep = "-"))
+  mutate(agency = str_remove(agency, "-equity-action-plan") |> str_to_upper()) |>
+  mutate(doc_id = str_c(year, layout_type_and_number, sep = " ") |> str_to_title() %>% str_c(agency, " ", .)) |>
+  rename_with(~ str_to_title(str_replace_all(.x, "_", " ")), -c(doc_id, text))
 
 corpus_collapsed <- corpus(data_collapsed, docid_field = "doc_id", text_field = "text")
 
@@ -127,9 +129,9 @@ browse_hits(tc,
   hits,
   filename = here("topic-browser.html"),
   view = FALSE,
-  header = "Global Keyword Search Results",
+  header = "All Keywords",
   n = Inf,
-  meta_cols = c("agency", "year", "layout_type_and_number", "page_number"),
+  meta_cols = c("Agency", "Year", "Layout Type And Number", "Page Number"),
   seed = 999
 )
 ```
@@ -142,7 +144,7 @@ create_tabset <- function(dict, title, filename) {
   tc <- create_tcorpus(corpus_collapsed_detailed,
     split_sentences = TRUE,
     max_sentences = Inf,
-    meta = c("agency", "year", "layout_type_and_number", "page_number")
+    meta = c("Agency", "Year", "Layout Type And Number", "Page Number"),
   )
   hits <- search_dictionary(tc, dict, ascii = TRUE, mode = "unique_hits")
 
@@ -153,7 +155,7 @@ create_tabset <- function(dict, title, filename) {
     view = FALSE,
     header = title,
     n = Inf,
-    meta_cols = c("agency", "year", "layout_type_and_number", "page_number"),
+    meta_cols = c("Agency", "Year", "Layout Type And Number", "Page Number"),
     seed = 999
   )
 
@@ -369,7 +371,8 @@ concepts_order <- c("Equity Types", "Metrics", "Legislation", "Underserved Commu
 
 dict_tidy <-
   dict_tidy |>
-  mutate(concept = factor(concept, levels = concepts_order, ordered = TRUE))
+  mutate(concept = str_to_title(concept)) |>
+  arrange(fct_relevel(concept, concepts_order))
 ```
 
 ```{r}
