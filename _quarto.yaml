@@ -19,7 +19,6 @@ execute:
 format:
   dashboard:
     theme: styles.scss
-    self-contained: true
     embed-resources: true
     code-fold: true
     code-line-numbers: true
