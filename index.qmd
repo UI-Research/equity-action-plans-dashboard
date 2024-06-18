@@ -161,6 +161,7 @@ create_tabset <- function(dict, title, filename) {
 }
 ```
 
+:::: {.column-screen}
 ::: panel-tabset
 
 
@@ -239,7 +240,7 @@ tabset_procurement <- create_tabset(dict_procurement, "Procurement", "topic-brow
 ```
 
 
-### Miscellaneous 
+### Other 
 ```{r}
 dict_misc <- dict[c(15:17, 35, 38:40, 44:47)]
 tabset_misc <- create_tabset(dict_misc, "Miscellaneous", "topic-browser-misc.html")
@@ -251,6 +252,7 @@ tabset_misc <- create_tabset(dict_misc, "Miscellaneous", "topic-browser-misc.htm
 
 
 :::
+::::
 
 # Dictionary
 
@@ -343,6 +345,32 @@ make_dict_table <- function(concept) {
 
 :::: {.column-screen}
 ::: panel-tabset
+
+## All Keywords
+
+```{r}
+dict_tidy |>
+  select(concept, pattern, search_terms) |>
+  gt() |>
+  gt::cols_label_with(everything(), ~ str_to_title(.x) |> str_replace("_", " ")) |>
+  tab_header(title = glue("All Keywords")) |>
+  tab_source_note(md('**Note:** Search terms are not case-sensitive and those ending with an "\\*" match words that start with the same characters. For instance, "Hispanic*" matches with "Hispanics", "Hispanic-serving", and "Hispanic-owned".')) |>
+  my_theme() |>
+  opt_interactive()
+```
+
+```{r}
+#| label: concept-ordering
+
+# Specify the order of the levels
+concepts_order <- c("Equity Types", "Metrics", "Legislation", "Underserved Communities", "Data", "Procurement", "Other")
+
+# Convert the 'concept' column to an ordered factor with the specified order
+
+dict_tidy <-
+  dict_tidy |>
+  mutate(concept = factor(concept, levels = concepts_order, ordered = TRUE))
+```
 
 ```{r}
 #| results: asis

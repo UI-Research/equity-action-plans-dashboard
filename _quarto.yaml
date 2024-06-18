@@ -3,7 +3,7 @@ project:
   output-dir: "docs"
   execute-dir: "project"
 book:
-  title: "Equity Action Plans 2023 Text Analysis"
+  title: "Equity Action Plans 2023 Keyword Analysis"
   date: today
   chapters:
     - index.qmd
