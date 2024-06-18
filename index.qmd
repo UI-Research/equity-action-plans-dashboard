@@ -83,7 +83,7 @@ universe_search <-
 
 # Browser Tool 
 
-## Row {height=100%}
+## Row {.flow height=100%}
 
 
 ```{r}
@@ -355,7 +355,7 @@ dict_tidy |>
   select(concept, pattern, search_terms) |>
   gt() |>
   gt::cols_label_with(everything(), ~ str_to_title(.x) |> str_replace("_", " ")) |>
-  tab_header(title = glue("All Keywords")) |>
+  tab_header(title = "All Keywords") |>
   tab_source_note(md('**Note:** Search terms are not case-sensitive and those ending with an "\\*" match words that start with the same characters. For instance, "Hispanic*" matches with "Hispanics", "Hispanic-serving", and "Hispanic-owned".')) |>
   my_theme() |>
   opt_interactive()
@@ -398,3 +398,39 @@ cat(res, sep = "\n")
 
 :::
 ::::
+
+
+# About
+
+## Row {.fill}
+
+::: card
+::: card-header
+About this dashboard
+:::
+::: card-body
+
+
+This dashboard is designed to provide you with a user-friendly interface for
+exploring text data from the 2023 equity action plans. Here are a few things you should know to get the most out of
+this tool:
+
+  - **Keyword Matches**: Our [browser tool](#Browser Tool) displays keyword matches in the
+    context of the paragraph in which they appear. This allows you to understand
+    the context of each keyword match, providing a more comprehensive view of
+    the results.
+
+  - **Refining Your Search**: You can refine your search by clicking on the
+    check boxes next to each keyword. This allows you to hone in on specific
+    terms and see only the data that is most relevant to your search.
+
+  - **Dictionary Page**: For a full list of search terms used, please refer to
+    the [Dictionary](#Dictionary) page. This page contains a comprehensive list of all the
+    keywords used in our search tool, providing a reference for understanding
+    the scope of our data.
+
+We hope you find this dashboard useful and intuitive. Happy exploring!
+
+
+:::
+:::

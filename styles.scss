@@ -150,3 +150,60 @@ $text-shadow: 0 1px 0 rgba(0, 0, 0, .05) !default;
         color: $dark;
     }
 }
+.card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); // Add a subtle box shadow
+  font-family: 'Lato', sans-serif;
+  font-style: normal; // Adjust the style as needed (normal, italic, etc.)
+}
+
+
+.card-header {
+    background-color: #1696d2;
+    color: rgba(255,255,255,.7);
+}
+.bslib-value-box .value-box-grid {
+    background-color: #1696d2;
+}
+
+
+.quarto-dashboard .bslib-value-box .value-box-value {
+    font-size: 45px;
+    color: rgba(255,255,255,.7);
+    background-color: #1696d2;
+}
+
+
+.quarto-dashboard .bslib-value-box .value-box-area {
+    background-color: #1696d2;
+}
+
+
+.navbar {
+  font-family: 'Lato', sans-serif;
+  font-style: normal;
+}
+
+
+
+
+// Adjust styles for the element with the ID `dashboard-collapse`.
+#dashboard-collapse {
+  // Align child elements to the end of the flex container, pushing them to the right.
+  justify-content: flex-end;
+
+  // Override margin styles for elements with classes `.navbar-nav` and `.me-auto`.
+  .navbar-nav.me-auto {
+    margin-right: unset !important;
+
+  }
+  }
+
+
+
+.girafe_container_std  {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    margin-left: 10px; /* Adjust the value as needed for the left margin */
+    margin-right: 10px; /* Adjust the value as needed for the right margin */
+}
