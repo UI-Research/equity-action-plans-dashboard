@@ -7,19 +7,16 @@ book:
   date: today
   chapters:
     - index.qmd
-
 execute:
   eval: true
   echo: false
   freeze: false
   warning: false
   message: false
-  keep-md: false
-
+  keep-md: true
 format:
   dashboard:
     theme: styles.scss
-    embed-resources: true
     code-fold: true
     code-line-numbers: true
     code-copy: true
@@ -31,6 +28,5 @@ format:
     knitr:
       opts_chunk:
         dev: "ragg_png"
-
 editor_options:
   chunk_output_type: console
