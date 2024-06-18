@@ -46,6 +46,16 @@ terms <-
     search_terms = str_flatten(search_term, collapse = ", ") %>%
       str_trim() |> str_split(", "),
     .by = c("pattern", "concept")
+  ) |>
+  mutate(
+    pattern = str_to_title(pattern),
+    pattern = case_match(pattern,
+      "Lgbtq+" ~ "LGBTQ+",
+      "Aapi" ~ "AAPI",
+      "Ai" ~ "AI",
+      "Poc" ~ "POC",
+      .default = pattern
+    )
   )
 
 terms_pattern <- set_names(terms$search_terms, terms$pattern)
@@ -72,6 +82,7 @@ universe_search <-
   left_join(make_dict_tidy(dict), by = c("pattern"))
 ```
 
+# Keyword Browser 
 
 ## Row {height=100%}
 
@@ -148,8 +159,7 @@ create_tabset <- function(dict, title, filename) {
   )
 
   # Return HTML code for iframe
-
-} 
+}
 ```
 
 ::: panel-tabset
@@ -166,7 +176,6 @@ create_tabset <- function(dict, title, filename) {
 ```{r}
 dict_equity_types <- dict[1:3]
 tabset_equity_types <- create_tabset(dict_equity_types, "Equity Types", "topic-browser-equity-types.html")
-
 ```
 
 ```{=html}
@@ -178,7 +187,6 @@ tabset_equity_types <- create_tabset(dict_equity_types, "Equity Types", "topic-b
 ```{r}
 dict_metrics <- dict[4:8]
 tabset_metrics <- create_tabset(dict_metrics, "Metrics", "topic-browser-metrics.html")
-
 ```
 
 ```{=html}
@@ -190,7 +198,6 @@ tabset_metrics <- create_tabset(dict_metrics, "Metrics", "topic-browser-metrics.
 ```{r}
 dict_legislation <- dict[9:14]
 tabset_legislation <- create_tabset(dict_legislation, "Legislation", "topic-browser-legislation.html")
-
 ```
 
 ```{=html}
@@ -202,8 +209,6 @@ tabset_legislation <- create_tabset(dict_legislation, "Legislation", "topic-brow
 ```{r}
 dict_underserved_communities <- dict[18:34]
 tabset_underserved_communities <- create_tabset(dict_underserved_communities, "Underserved Communities", "topic-browser-underserved-communities.html")
-
-
 ```
 
 ```{=html}
@@ -217,7 +222,6 @@ dict_data <- dict[c(36, 37, 41:43)]
 tabset_data <- create_tabset(dict_data, "Data", "topic-browser-data.html")
 
 # Note dissagregation (index 36) seems to have zero hits
-
 ```
 
 ```{=html}
@@ -229,7 +233,6 @@ tabset_data <- create_tabset(dict_data, "Data", "topic-browser-data.html")
 ```{r}
 dict_procurement <- dict[c(48:49)]
 tabset_procurement <- create_tabset(dict_procurement, "Procurement", "topic-browser-procurement.html")
-
 ```
 
 ```{=html}
@@ -241,8 +244,6 @@ tabset_procurement <- create_tabset(dict_procurement, "Procurement", "topic-brow
 ```{r}
 dict_misc <- dict[c(15:17, 35, 38:40, 44:47)]
 tabset_misc <- create_tabset(dict_misc, "Miscellaneous", "topic-browser-misc.html")
-
-
 ```
 
 ```{=html}
@@ -252,3 +253,118 @@ tabset_misc <- create_tabset(dict_misc, "Miscellaneous", "topic-browser-misc.htm
 
 :::
 
+# Keyword Dictionary
+
+```{r}
+#| label: dictionary
+
+
+
+add_quotes <- function(x) {
+  # Add quotes around terms
+  quoted <- str_replace_all(x, "\\b([^,]+)\\b", "'\\1'")
+
+  # Remove quotes around 'and'
+  final <- str_replace_all(quoted, "'and'", "and")
+
+  return(final)
+}
+
+capitalize_terms <- c(
+  "arpa", "iija", "ira", "j40", "cejst",
+  "ej", "cj",
+  "cdo",
+  "asl",
+  "Aapi",
+  "aanhpi",
+  "nh",
+  "lgbtq",
+  "lgbtqia",
+  "lgbt",
+  "lgbtqi",
+  "ai"
+)
+
+# Create a named vector where the names are the terms to replace and the values are the replacements
+replacements <- set_names(str_to_upper(capitalize_terms), capitalize_terms)
+
+
+dict_tidy <-
+  make_dict_tidy(dict) |>
+  left_join(terms |> select(-search_terms),
+    by = c("pattern")
+  ) |>
+  distinct(search_terms, .keep_all = TRUE) |>
+  mutate(
+    search_terms = str_to_sentence(search_terms),
+    search_terms = str_replace(search_terms, "(.*),([^,]*)$", "\\1, and\\2")
+  ) |>
+  mutate(
+    search_terms = map_chr(search_terms, add_quotes),
+    search_terms = str_replace(search_terms, "'and ", "and '"),
+    search_terms = str_replace_all(search_terms, "'\\*", "\\*'")
+  ) |>
+  mutate(search_terms = str_replace_all(search_terms, replacements)) |>
+  mutate(concept = case_match(pattern,
+    c(
+      "Accountability",
+      "Barriers",
+      "Chief Data Officer",
+      "Climate",
+      "Collaboration",
+      "Community Engagement",
+      "Customer Service",
+      "Knowledge",
+      "Language Accessibility",
+      "Staff Experience",
+      "Teams"
+    ) ~ "Other",
+    c("Data", "AI", "Analyze", "Disaggregation", "Disaggregation_plus") ~ "Data",
+    c("Procurement", "Budget") ~ "Procurement",
+    .default = concept
+  ))
+```
+
+```{r}
+make_dict_table <- function(concept) {
+  tbl <-
+    dict_tidy |>
+    filter(concept == {{ concept }}) |>
+    select(-concept) |>
+    gt() |>
+    gt::cols_label_with(everything(), ~ str_to_title(.x) |> str_replace("_", " ")) |>
+    tab_header(title = glue("{concept} Keywords")) |>
+    tab_source_note(md('**Note:** Search terms are not case-sensitive and those ending with an "\\*" match words that start with the same characters. For instance, "Hispanic*" matches with "Hispanics", "Hispanic-serving", and "Hispanic-owned".')) |>
+    my_theme() |>
+    opt_interactive()
+
+  return(tbl)
+}
+```
+
+:::: {.column-screen}
+::: panel-tabset
+
+```{r}
+#| results: asis
+#| fig-width: 14
+#| fig-height: 6
+
+res <- purrr::map_chr(unique(dict_tidy$concept), \(x) {
+  knitr::knit_child(text = c(
+    "## `r x`",
+    "",
+    "```{r}",
+    "#| echo: false",
+    "make_dict_table(x)",
+    "```",
+    "",
+    ""
+  ), envir = environment(), quiet = TRUE)
+})
+
+cat(res, sep = "\n")
+```
+
+:::
+::::
