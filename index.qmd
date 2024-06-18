@@ -1,5 +1,4 @@
 ---
-title: "Equity Action Plan Text Tool"
 format: dashboard
 ---
 
@@ -82,7 +81,7 @@ universe_search <-
   left_join(make_dict_tidy(dict), by = c("pattern"))
 ```
 
-# Keyword Browser 
+# Browser Tool 
 
 ## Row {height=100%}
 
@@ -253,7 +252,7 @@ tabset_misc <- create_tabset(dict_misc, "Miscellaneous", "topic-browser-misc.htm
 
 :::
 
-# Keyword Dictionary
+# Dictionary
 
 ```{r}
 #| label: dictionary
