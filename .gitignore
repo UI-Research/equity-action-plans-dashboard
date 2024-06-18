@@ -6,3 +6,5 @@
 .quarto
 
 /.quarto/
+/docs/site_libs
+/docs/site_libs
